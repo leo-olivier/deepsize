@@ -23,12 +23,13 @@ chrono = { version = "^0.4", optional = true }
 tokio = { version = "^1.1", optional = true, default-features = false }
 actix = { version = "^0.11.0", optional = true, default-features = false }
 elsa = { git = "https://github.com/leo-olivier/elsa.git", optional = true }
+stable_deref_trait = { version = "1.2.1", optional = true }
 
 [dev-dependencies]
 deepsize_derive = { path = "deepsize_derive", version = "0.1.1" }
 
 [features]
-default = ["std", "derive"]
+default = ["std", "derive", "elsa"]
 derive = ["deepsize_derive"]
 std = []
 tokio_net = ["tokio", "tokio/net"]
@@ -39,4 +40,4 @@ arrayvec = ["dep:arrayvec"]
 slab = ["dep:slab"]
 slotmap = ["dep:slotmap"]
 actix = ["dep:actix"]
-elsa = ["dep:elsa"]
+elsa = ["dep:elsa", "dep:stable_deref_trait"]
