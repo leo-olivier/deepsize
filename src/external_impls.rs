@@ -194,3 +194,22 @@ mod actix_impl {
         }
     }
 }
+
+#[cfg(feature = "elsa")]
+mod elsa_impl {
+    use crate::{Context, DeepSizeOf};
+    use elsa::FrozenVec;
+
+    impl<T> DeepSizeOf for FrozenVec<T>
+    where
+        T: DeepSizeOf + stable_deref_trait::StableDeref,
+        <T as std::ops::Deref>::Target: DeepSizeOf,
+    {
+        fn deep_size_of_children(&self, context: &mut Context) -> usize {
+            self.iter()
+                .map(|child| child.deep_size_of_children(context))
+                .sum::<usize>()
+                + self.capacity() * size_of::<T>()
+        }
+    }
+}
