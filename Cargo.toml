@@ -12,7 +12,7 @@ keywords = ["size", "stack", "heap"]
 categories = ["development-tools::profiling", "memory-management"]
 
 [dependencies]
-elsa = { version = "1.11.2", optional = true }
+elsa = { git = "https://github.com/Manishearth/elsa", rev = "91944aacda886a054a8e3ba9aa91c73ea04de96c", optional = true }
 deepsize_derive = { path = "deepsize_derive", version = "0.1.2", optional = true }
 slotmap = { version = "^0.4", optional = true }
 slab = { version = "^0.4", optional = true }
