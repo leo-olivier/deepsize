@@ -134,6 +134,59 @@ mod context_tests {
     }
 }
 
+#[cfg(feature = "petgraph")]
+#[test]
+fn stable_digraph() {
+    use petgraph::graph::{Edge, Node};
+    use petgraph::stable_graph::StableDiGraph;
+
+    let mut graph = StableDiGraph::<String, Box<u64>>::with_capacity(4, 4);
+    let a = graph.add_node(String::with_capacity(11));
+    let b = graph.add_node(String::with_capacity(17));
+    let removed_node = graph.add_node(String::with_capacity(23));
+    let live_edge = graph.add_edge(a, b, Box::new(5));
+    let removed_edge = graph.add_edge(b, a, Box::new(8));
+
+    assert_eq!(graph.remove_node(removed_node).unwrap().capacity(), 23);
+    assert!(graph.remove_edge(removed_edge).is_some());
+
+    let (node_capacity, edge_capacity) = graph.capacity();
+    let live_node_capacity =
+        graph.node_weight(a).unwrap().capacity() + graph.node_weight(b).unwrap().capacity();
+    let expected = size_of::<StableDiGraph<String, Box<u64>>>()
+        + node_capacity * size_of::<Node<Option<String>>>()
+        + edge_capacity * size_of::<Edge<Option<Box<u64>>>>()
+        + live_node_capacity
+        + size_of::<u64>();
+
+    assert_eq!(
+        graph.edge_weight(live_edge).unwrap().deep_size_of(),
+        2 * size_of::<u64>()
+    );
+    assert_eq!(graph.deep_size_of(), expected);
+}
+
+#[cfg(feature = "bimap")]
+#[test]
+fn bimap() {
+    use alloc::rc::Rc;
+    use bimap::BiMap;
+
+    let mut map = BiMap::<String, Box<u64>>::with_capacity(4);
+    map.insert(String::with_capacity(11), Box::new(5));
+    map.insert(String::with_capacity(17), Box::new(8));
+
+    let expected_children = map.iter().fold(0, |sum, (left, right)| {
+        sum + left.deep_size_of() + right.deep_size_of()
+    });
+    let expected_maps = map.capacity() * 2 * (size_of::<Rc<String>>() + size_of::<Rc<Box<u64>>>());
+
+    assert_eq!(
+        map.deep_size_of(),
+        size_of::<BiMap<String, Box<u64>>>() + expected_children + expected_maps
+    );
+}
+
 #[cfg(feature = "derive")]
 mod test_derive {
     use super::*;

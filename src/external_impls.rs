@@ -213,3 +213,58 @@ mod elsa_impl {
         }
     }
 }
+
+#[cfg(feature = "petgraph")]
+mod petgraph_impl {
+    use crate::{Context, DeepSizeOf};
+    use core::mem::size_of;
+    use petgraph::graph::{Edge, IndexType, Node};
+    use petgraph::stable_graph::StableDiGraph;
+
+    impl<N, E, Ix> DeepSizeOf for StableDiGraph<N, E, Ix>
+    where
+        N: DeepSizeOf,
+        E: DeepSizeOf,
+        Ix: IndexType,
+    {
+        fn deep_size_of_children(&self, context: &mut Context) -> usize {
+            let (node_capacity, edge_capacity) = self.capacity();
+            let child_sizes = self
+                .node_weights()
+                .fold(0, |sum, node| sum + node.deep_size_of_children(context))
+                + self
+                    .edge_weights()
+                    .fold(0, |sum, edge| sum + edge.deep_size_of_children(context));
+            let graph_size = node_capacity * size_of::<Node<Option<N>, Ix>>()
+                + edge_capacity * size_of::<Edge<Option<E>, Ix>>();
+
+            child_sizes + graph_size
+        }
+    }
+}
+
+#[cfg(feature = "bimap")]
+mod bimap_impl {
+    use crate::{Context, DeepSizeOf};
+    use alloc::rc::Rc;
+    use bimap::BiMap;
+    use core::{hash::Hash, mem::size_of};
+
+    impl<L, R> DeepSizeOf for BiMap<L, R>
+    where
+        L: DeepSizeOf + Eq + Hash,
+        R: DeepSizeOf + Eq + Hash,
+    {
+        fn deep_size_of_children(&self, context: &mut Context) -> usize {
+            let child_sizes = self.iter().fold(0, |sum, (left, right)| {
+                sum + size_of::<L>()
+                    + left.deep_size_of_children(context)
+                    + size_of::<R>()
+                    + right.deep_size_of_children(context)
+            });
+            let map_size = self.capacity() * 2 * (size_of::<Rc<L>>() + size_of::<Rc<R>>());
+
+            child_sizes + map_size
+        }
+    }
+}
