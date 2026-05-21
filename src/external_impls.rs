@@ -218,8 +218,15 @@ mod elsa_impl {
 mod petgraph_impl {
     use crate::{Context, DeepSizeOf};
     use core::mem::size_of;
+    use petgraph::graph::NodeIndex;
     use petgraph::graph::{Edge, IndexType, Node};
     use petgraph::stable_graph::StableDiGraph;
+
+    impl DeepSizeOf for NodeIndex<u32> {
+        fn deep_size_of_children(&self, _context: &mut Context) -> usize {
+            4
+        }
+    }
 
     impl<N, E, Ix> DeepSizeOf for StableDiGraph<N, E, Ix>
     where
